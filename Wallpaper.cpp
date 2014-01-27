@@ -3,15 +3,21 @@
 
 #include "Wallpaper.hpp"
 
+// useful for debugging - set to 0 to disable
+#define FORCE_IMAGE 1
+#define FORCE_IMAGE_TO "/home/thothonegan/1390774577226.gif"
+
 Wallpaper::Wallpaper (QObject* parent, const QVariantList& args)
 : Plasma::Wallpaper (parent, args)
 {
+	m_movie.setCacheMode (QMovie::CacheAll);
 	m_displayedLabel.setMovie (&m_movie);
 	//m_displayedLabel.setScaledContents(true);
 
 	connect (&m_movie, SIGNAL(finished()), this, SLOT(movieFinished()));
 	connect (&m_movie, SIGNAL(frameChanged(int)), this, SLOT(frameChanged()));
 
+	
 	//m_filePath = "/home/thothonegan/1390774577226.gif";
 	//settingsModified();
 	//emit settingsChanged(true);
@@ -52,6 +58,10 @@ void Wallpaper::init (const KConfigGroup& config)
 	m_filePath = config.readEntry ("filePath", QString());
 
 	//qDebug() << "init: " << m_filePath;
+
+	#if FORCE_IMAGE
+		m_filePath = FORCE_IMAGE_TO;
+	#endif
 
 	m_movie.stop();
 	m_movie.setFileName(m_filePath);

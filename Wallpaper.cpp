@@ -4,7 +4,7 @@
 #include "Wallpaper.hpp"
 
 // useful for debugging - set to 0 to disable
-#define FORCE_IMAGE 1
+#define FORCE_IMAGE 0
 #define FORCE_IMAGE_TO "/home/thothonegan/1390774577226.gif"
 
 Wallpaper::Wallpaper (QObject* parent, const QVariantList& args)

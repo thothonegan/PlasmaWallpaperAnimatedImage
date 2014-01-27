@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=Animated Image
+Type=Service
+Icon=image-jpeg
+ServiceTypes=Plasma/Wallpaper
+
+X-KDE-Library=plasma_wallpaper_animatedimage
+X-KDE-PluginInfo-Author=Kenneth Perry (thothonegan)
+X-KDE-PluginInfo-Email=thothonegan@gmail.com
+X-KDE-PluginInfo-Name=animatedimage
+X-KDE-PluginInfo-Version=0.1
+X-KDE-PluginInfo-License=GPL
+X-KDE-PluginInfo-EnabledByDefault=true
+

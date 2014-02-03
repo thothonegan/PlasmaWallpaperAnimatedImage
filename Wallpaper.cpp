@@ -12,22 +12,20 @@ Wallpaper::Wallpaper (QObject* parent, const QVariantList& args)
 {
 	m_movie.setCacheMode (QMovie::CacheAll);
 	m_displayedLabel.setMovie (&m_movie);
-	//m_displayedLabel.setScaledContents(true);
+	alignDisplayedLabel();
 
 	connect (&m_movie, SIGNAL(finished()), this, SLOT(movieFinished()));
 	connect (&m_movie, SIGNAL(frameChanged(int)), this, SLOT(frameChanged()));
-
-	
-	//m_filePath = "/home/thothonegan/1390774577226.gif";
-	//settingsModified();
-	//emit settingsChanged(true);
 }
 
 void Wallpaper::save (KConfigGroup& config)
 {
-	//qDebug() << "save";
+	if ( DebugEnabled ) qDebug() << "save";
 
 	config.writeEntry ("filePath", m_filePath);
+	config.writeEntry( "renderOptions", (int)m_renderOptions );
+	config.writeEntry( "aspectRatio", m_aspectRatio );
+	config.writeEntry( "tiling", m_tiling );
 }
 
 void Wallpaper::paint (QPainter* painter, const QRectF& exposedRect)
@@ -48,6 +46,22 @@ QWidget* Wallpaper::createConfigurationInterface (QWidget* parent)
 	m_configWidget.m_filePath->setText (m_filePath);
 	connect (m_configWidget.m_selectFileButton, SIGNAL(clicked()), this, SLOT(selectFile()));
 
+	m_configWidget.renderOptionStretch->setChecked( m_renderOptions.testFlag( Wallpaper::Stretch ) );
+	m_configWidget.renderOptionAspect->setChecked( m_renderOptions.testFlag( Wallpaper::Aspect ) );
+	m_configWidget.renderOptionTile->setChecked( m_renderOptions.testFlag( Wallpaper::Tile ) );
+	connect( m_configWidget.renderOptionStretch, SIGNAL( stateChanged(int) ), this, SLOT( setRenderOptions() ) );
+	connect( m_configWidget.renderOptionAspect, SIGNAL( stateChanged(int) ), this, SLOT( setRenderOptions() ) );
+	connect( m_configWidget.renderOptionTile, SIGNAL( stateChanged(int) ), this, SLOT( setRenderOptions() ) );
+
+	m_configWidget.aspectW->setText( QString().setNum( m_aspectRatio.x() ) );
+	m_configWidget.aspectH->setText( QString().setNum( m_aspectRatio.y() ) );
+	m_configWidget.tilingX->setText( QString().setNum( m_tiling.x() ) );
+	m_configWidget.tilingY->setText( QString().setNum( m_tiling.y() ) );
+	connect( m_configWidget.aspectW, SIGNAL( textChanged(const QString &) ), this, SLOT( setAspectRatio() ) );
+	connect( m_configWidget.aspectH, SIGNAL( textChanged(const QString &) ), this, SLOT( setAspectRatio() ) );
+	connect( m_configWidget.tilingX, SIGNAL( textChanged(const QString &) ), this, SLOT( setTiling() ) );
+	connect( m_configWidget.tilingY, SIGNAL( textChanged(const QString &) ), this, SLOT( setTiling() ) );
+
 	connect (this, SIGNAL(settingsChanged(bool)), parent, SLOT(settingsChanged(bool)));
 
 	return widget;
@@ -57,7 +71,11 @@ void Wallpaper::init (const KConfigGroup& config)
 {
 	m_filePath = config.readEntry ("filePath", QString());
 
-	//qDebug() << "init: " << m_filePath;
+	m_renderOptions = (Wallpaper::RenderOptions)config.readEntry( "renderOptions", 0 );
+	m_aspectRatio = config.readEntry( "aspectRatio", QPoint() );
+	m_tiling = config.readEntry( "tiling", QPoint() );
+
+	if ( DebugEnabled ) qDebug() << "init: " << m_filePath;
 
 	#if FORCE_IMAGE
 		m_filePath = FORCE_IMAGE_TO;
@@ -71,10 +89,31 @@ void Wallpaper::init (const KConfigGroup& config)
 	emit update(boundingRect());
 }
 
+void Wallpaper::alignDisplayedLabel (void)
+{
+	if ( m_renderOptions.testFlag( Wallpaper::Tile ) )
+	{
+		m_displayedLabel.setAlignment( Qt::AlignLeft | Qt::AlignTop );
+	} else {
+		m_displayedLabel.setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
+	}
+}
+
 void Wallpaper::settingsModified (void)
 {
-	//qDebug() << "settingsModified : " << m_filePath;
+	if ( DebugEnabled )
+	{
+		qDebug() << "SETTINGS CHANGED";
+		qDebug() << "Current File Path : " << m_filePath;
+	}
 	m_configWidget.m_filePath->setText (m_filePath);
+
+	alignDisplayedLabel();
+	if ( m_renderOptions.testFlag( Wallpaper::Stretch ) )
+	{
+		m_movie.setScaledSize( boundingRect().size().toSize() );
+		m_displayedLabel.resize( boundingRect().size().toSize() );
+	}
 
 	m_movie.stop();
 	m_movie.setFileName (m_filePath);
@@ -88,21 +127,48 @@ void Wallpaper::settingsModified (void)
 
 void Wallpaper::selectFile (void)
 {
-	//qDebug() << "SELECT FILE";
+	if ( DebugEnabled ) qDebug() << "SELECT FILE";
 
 	QString filePath = QFileDialog::getOpenFileName (NULL, "Select Animated Image", QString(), "Images (*.gif)");
 	if (filePath != QString())
 	{
 		m_filePath = filePath;
-
-	//	qDebug() << "SETTINGS CHANGED";
 		settingsModified();
 	}
 }
 
+void Wallpaper::setRenderOptions( void )
+{
+	if ( DebugEnabled ) qDebug() << "SET RENDER OPTIONS";
+
+	m_renderOptions = 0;
+	if ( m_configWidget.renderOptionStretch->isChecked() ) m_renderOptions |= Wallpaper::Stretch;
+	if ( m_configWidget.renderOptionAspect->isChecked() ) m_renderOptions |= Wallpaper::Aspect;
+	if ( m_configWidget.renderOptionTile->isChecked() ) m_renderOptions |= Wallpaper::Tile;
+	settingsModified();
+}
+
+void Wallpaper::setAspectRatio( void )
+{
+	if ( DebugEnabled ) qDebug() << "SET ASPECT RATIO";
+
+	m_aspectRatio.setX( m_configWidget.aspectW->text().toInt() );
+	m_aspectRatio.setY( m_configWidget.aspectH->text().toInt() );
+	settingsModified();
+}
+
+void Wallpaper::setTiling( void )
+{
+	if ( DebugEnabled ) qDebug() << "SET TILING";
+
+	m_tiling.setX( m_configWidget.tilingX->text().toInt() );
+	m_tiling.setY( m_configWidget.tilingY->text().toInt() );
+	settingsModified();
+}
+
 void Wallpaper::frameChanged (void)
 {
-//qDebug() << "***** frame change ****";
+	if ( DebugEnabled ) qDebug() << "***** frame change ****";
 
 	// repaint
 	render();
@@ -111,23 +177,30 @@ void Wallpaper::frameChanged (void)
 
 void Wallpaper::movieFinished (void)
 {
-	//qDebug() << "*** movie finished";
-//	m_movie.start(); // repeat
+	if ( DebugEnabled ) qDebug() << "*** movie finished";
+	// m_movie.start(); // repeat
 }
 
 void Wallpaper::render (void)
 {
-	if (m_buffer.size() != boundingRect().size())
-	{
-		m_buffer = QPixmap(boundingRect().size().toSize());
-		m_movie.setScaledSize (boundingRect().size().toSize());
-		m_displayedLabel.resize (boundingRect().size().toSize());
-	}
+	if (m_buffer.size() != boundingRect().size()) m_buffer = QPixmap(boundingRect().size().toSize());
 
 	QPainter painter;
 	painter.begin (&m_buffer);
 
-	m_displayedLabel.render (&painter);
+	if ( m_renderOptions.testFlag( Wallpaper::Tile ) )
+	{
+		for ( int x = 0; x < m_tiling.x(); x++ ) {
+			for ( int y = 0; y < m_tiling.y(); y++ ) {
+				QPoint offset = QPoint( m_movie.frameRect().width() * x, m_movie.frameRect().height() * y );
+				if ( x > 0 ) offset.rx() += x - 1;
+				if ( y > 0 ) offset.ry() += y - 1;
+				m_displayedLabel.render( &painter, offset );
+			}
+		}
+	} else {
+		m_displayedLabel.render (&painter);
+	}
 }
 
 #include "Wallpaper.moc"

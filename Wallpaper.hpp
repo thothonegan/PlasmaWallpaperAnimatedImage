@@ -25,11 +25,12 @@ class Wallpaper : public Plasma::Wallpaper
 		virtual QWidget* createConfigurationInterface (QWidget* parent);
 
 		enum RenderOption {
-			Centered = 0x0,
-			Scaled = 0x1,
-			ScaledPreserveAspect = 0x2,
-			Tiled = 0x4,
-			TiledScaled = 0x8
+			None = 0x0,
+			Centered = 0x1,
+			Scaled = 0x2,
+			ScaledPreserveAspect = 0x4,
+			Tiled = 0x8,
+			TiledScaled = 0x16
 		};
 		Q_DECLARE_FLAGS( RenderOptions, RenderOption );
 

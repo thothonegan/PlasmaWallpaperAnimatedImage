@@ -195,14 +195,16 @@ void Wallpaper::movieFinished (void)
 
 void Wallpaper::render (void)
 {
-	if (m_buffer.size() != boundingRect().size()) m_buffer = QPixmap(boundingRect().size().toSize());
+	QSize renderSize = boundingRect().size().toSize();
+	QSize imageSize = m_movie.frameRect().size();
+	if ( m_buffer.size() != boundingRect().size() ) m_buffer = QPixmap( renderSize );
 
 	// This code was intended to be in settingsModified(), but boundingRect() wasn't returning the
 	// expected values.  If you figure out how to fix this, put this code back into settingsModified().
 	if ( m_renderOption.testFlag( Wallpaper::TiledScaled ) )
 	{
 		// Scale so that the number of tiles fit into the screen space
-		QSize scaledTiling = boundingRect().size().toSize();
+		QSize scaledTiling = renderSize;
 		scaledTiling.rwidth() /= m_tiling.x();
 		scaledTiling.rheight() /= m_tiling.y();
 		m_movie.setScaledSize( scaledTiling );
@@ -211,16 +213,13 @@ void Wallpaper::render (void)
 	else if ( m_renderOption.testFlag( Wallpaper::Scaled ) )
 	{
 		// Scale to size of the screen
-		m_movie.setScaledSize( boundingRect().size().toSize() );
-		m_displayedLabel.resize( boundingRect().size().toSize() );
+		m_movie.setScaledSize( renderSize );
+		m_displayedLabel.resize( renderSize );
 	}
 	else if ( m_renderOption.testFlag( Wallpaper::ScaledPreserveAspect ) )
 	{
 		// Scale to size of the screen, preserving the aspect ratio of the original image
-		QSize renderSize = boundingRect().size().toSize();
-		QSize imageSize = m_movie.frameRect().size();
 		QSize aspectScale;
-
 		if ( imageSize.width() > imageSize.height() )
 		{
 			aspectScale = QSize( renderSize.width(), imageSize.height() * renderSize.width() / imageSize.width() );
@@ -235,7 +234,7 @@ void Wallpaper::render (void)
 	{
 		// Reset to original size
 		m_movie.setScaledSize( QSize( -1, -1 ) );
-		m_displayedLabel.resize( m_movie.frameRect().size() );
+		m_displayedLabel.resize( imageSize );
 	}
 
 	QPainter painter;
@@ -245,7 +244,7 @@ void Wallpaper::render (void)
 	{
 		for ( int x = 0; x < m_tiling.x(); x++ ) {
 			for ( int y = 0; y < m_tiling.y(); y++ ) {
-				QPoint offset = QPoint( m_movie.frameRect().width() * x, m_movie.frameRect().height() * y );
+				QPoint offset = QPoint( imageSize.width() * x + 1, imageSize.height() * y + 1 );
 				m_displayedLabel.render( &painter, offset );
 			}
 		}

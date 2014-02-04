@@ -95,11 +95,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="aspectW">
-           <property name="inputMask">
-            <string>9; </string>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="aspectW"/>
          </item>
         </layout>
        </item>
@@ -113,11 +109,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="tilingX">
-           <property name="inputMask">
-            <string>9; </string>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="tilingX"/>
          </item>
         </layout>
        </item>
@@ -138,11 +130,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="aspectH">
-           <property name="inputMask">
-            <string>9; </string>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="aspectH"/>
          </item>
         </layout>
        </item>
@@ -156,11 +144,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="tilingY">
-           <property name="inputMask">
-            <string>9; </string>
-           </property>
-          </widget>
+          <widget class="QLineEdit" name="tilingY"/>
          </item>
         </layout>
        </item>

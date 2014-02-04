@@ -109,11 +109,6 @@ void Wallpaper::settingsModified (void)
 	m_configWidget.m_filePath->setText (m_filePath);
 
 	alignDisplayedLabel();
-	if ( m_renderOptions.testFlag( Wallpaper::Stretch ) )
-	{
-		m_movie.setScaledSize( boundingRect().size().toSize() );
-		m_displayedLabel.resize( boundingRect().size().toSize() );
-	}
 
 	m_movie.stop();
 	m_movie.setFileName (m_filePath);
@@ -161,8 +156,23 @@ void Wallpaper::setTiling( void )
 {
 	if ( DebugEnabled ) qDebug() << "SET TILING";
 
-	m_tiling.setX( m_configWidget.tilingX->text().toInt() );
-	m_tiling.setY( m_configWidget.tilingY->text().toInt() );
+	bool ok;
+	int tilingX = m_configWidget.tilingX->text().toInt( &ok );
+	if ( ( tilingX < 1 ) || ( !ok ) )
+	{
+		tilingX = 1;
+		m_configWidget.tilingX->setText( QString().setNum( tilingX ) );
+	}
+	m_tiling.setX( tilingX );
+
+	int tilingY = m_configWidget.tilingY->text().toInt( &ok );
+	if ( ( tilingY < 1 ) || ( !ok ) )
+	{
+		tilingY = 1;
+		m_configWidget.tilingY->setText( QString().setNum( tilingY ) );
+	}
+	m_tiling.setY( tilingY );
+
 	settingsModified();
 }
 
@@ -185,6 +195,29 @@ void Wallpaper::render (void)
 {
 	if (m_buffer.size() != boundingRect().size()) m_buffer = QPixmap(boundingRect().size().toSize());
 
+	// This code was intended to be in settingsModified(), but boundingRect() wasn't returning the
+	// expected values.  If you figure out how to fix this, put this code back into settingsModified().
+	if ( m_renderOptions.testFlag( Wallpaper::Stretch ) )
+	{
+		if ( m_renderOptions.testFlag( Wallpaper::Tile ) )
+		{
+			// Scale so that the number of tiles fit into the screen space
+			QSize scaledTiling = boundingRect().size().toSize();
+			scaledTiling.rwidth() /= m_tiling.x();
+			scaledTiling.rheight() /= m_tiling.y();
+			m_movie.setScaledSize( scaledTiling );
+			m_displayedLabel.resize( scaledTiling );
+		} else {
+			// Scale to size of the screen
+			m_movie.setScaledSize( boundingRect().size().toSize() );
+			m_displayedLabel.resize( boundingRect().size().toSize() );
+		}
+	} else {
+		// Reset to original size
+		m_movie.setScaledSize( QSize( -1, -1 ) );
+		m_displayedLabel.resize( m_movie.frameRect().size() );
+	}
+
 	QPainter painter;
 	painter.begin (&m_buffer);
 
@@ -193,8 +226,6 @@ void Wallpaper::render (void)
 		for ( int x = 0; x < m_tiling.x(); x++ ) {
 			for ( int y = 0; y < m_tiling.y(); y++ ) {
 				QPoint offset = QPoint( m_movie.frameRect().width() * x, m_movie.frameRect().height() * y );
-				if ( x > 0 ) offset.rx() += x - 1;
-				if ( y > 0 ) offset.ry() += y - 1;
 				m_displayedLabel.render( &painter, offset );
 			}
 		}

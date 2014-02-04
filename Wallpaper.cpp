@@ -1,3 +1,6 @@
+
+#include <cmath>
+
 #include <QFileDialog>
 #include <QPainter>
 
@@ -23,8 +26,7 @@ void Wallpaper::save (KConfigGroup& config)
 	if ( DebugEnabled ) qDebug() << "save";
 
 	config.writeEntry ("filePath", m_filePath);
-	config.writeEntry( "renderOptions", (int)m_renderOptions );
-	config.writeEntry( "aspectRatio", m_aspectRatio );
+	config.writeEntry( "renderOption", (int)m_renderOption );
 	config.writeEntry( "tiling", m_tiling );
 }
 
@@ -46,19 +48,13 @@ QWidget* Wallpaper::createConfigurationInterface (QWidget* parent)
 	m_configWidget.m_filePath->setText (m_filePath);
 	connect (m_configWidget.m_selectFileButton, SIGNAL(clicked()), this, SLOT(selectFile()));
 
-	m_configWidget.renderOptionStretch->setChecked( m_renderOptions.testFlag( Wallpaper::Stretch ) );
-	m_configWidget.renderOptionAspect->setChecked( m_renderOptions.testFlag( Wallpaper::Aspect ) );
-	m_configWidget.renderOptionTile->setChecked( m_renderOptions.testFlag( Wallpaper::Tile ) );
-	connect( m_configWidget.renderOptionStretch, SIGNAL( stateChanged(int) ), this, SLOT( setRenderOptions() ) );
-	connect( m_configWidget.renderOptionAspect, SIGNAL( stateChanged(int) ), this, SLOT( setRenderOptions() ) );
-	connect( m_configWidget.renderOptionTile, SIGNAL( stateChanged(int) ), this, SLOT( setRenderOptions() ) );
+	int index = (int)m_renderOption;
+	if ( index > 2 ) index = log( index ) / log(2);
+	m_configWidget.renderOption->setCurrentIndex( index );
+	connect( m_configWidget.renderOption, SIGNAL( currentIndexChanged(int) ), this, SLOT( setRenderOption() ) );
 
-	m_configWidget.aspectW->setText( QString().setNum( m_aspectRatio.x() ) );
-	m_configWidget.aspectH->setText( QString().setNum( m_aspectRatio.y() ) );
 	m_configWidget.tilingX->setText( QString().setNum( m_tiling.x() ) );
 	m_configWidget.tilingY->setText( QString().setNum( m_tiling.y() ) );
-	connect( m_configWidget.aspectW, SIGNAL( textChanged(const QString &) ), this, SLOT( setAspectRatio() ) );
-	connect( m_configWidget.aspectH, SIGNAL( textChanged(const QString &) ), this, SLOT( setAspectRatio() ) );
 	connect( m_configWidget.tilingX, SIGNAL( textChanged(const QString &) ), this, SLOT( setTiling() ) );
 	connect( m_configWidget.tilingY, SIGNAL( textChanged(const QString &) ), this, SLOT( setTiling() ) );
 
@@ -71,8 +67,7 @@ void Wallpaper::init (const KConfigGroup& config)
 {
 	m_filePath = config.readEntry ("filePath", QString());
 
-	m_renderOptions = (Wallpaper::RenderOptions)config.readEntry( "renderOptions", 0 );
-	m_aspectRatio = config.readEntry( "aspectRatio", QPoint() );
+	m_renderOption = (Wallpaper::RenderOptions)config.readEntry( "renderOption", 0 );
 	m_tiling = config.readEntry( "tiling", QPoint() );
 
 	if ( DebugEnabled ) qDebug() << "init: " << m_filePath;
@@ -91,7 +86,7 @@ void Wallpaper::init (const KConfigGroup& config)
 
 void Wallpaper::alignDisplayedLabel (void)
 {
-	if ( m_renderOptions.testFlag( Wallpaper::Tile ) )
+	if ( ( m_renderOption.testFlag( Wallpaper::Tiled ) ) || ( m_renderOption.testFlag( Wallpaper::TiledScaled ) ) )
 	{
 		m_displayedLabel.setAlignment( Qt::AlignLeft | Qt::AlignTop );
 	} else {
@@ -132,23 +127,30 @@ void Wallpaper::selectFile (void)
 	}
 }
 
-void Wallpaper::setRenderOptions( void )
+void Wallpaper::setRenderOption( void )
 {
 	if ( DebugEnabled ) qDebug() << "SET RENDER OPTIONS";
 
-	m_renderOptions = 0;
-	if ( m_configWidget.renderOptionStretch->isChecked() ) m_renderOptions |= Wallpaper::Stretch;
-	if ( m_configWidget.renderOptionAspect->isChecked() ) m_renderOptions |= Wallpaper::Aspect;
-	if ( m_configWidget.renderOptionTile->isChecked() ) m_renderOptions |= Wallpaper::Tile;
-	settingsModified();
-}
+	switch ( m_configWidget.renderOption->currentIndex() )
+	{
+		case 1:
+			m_renderOption = Wallpaper::Scaled;
+			break;
+		case 2:
+			m_renderOption = Wallpaper::ScaledPreserveAspect;
+			break;
+		case 3:
+			m_renderOption = Wallpaper::Tiled;
+			break;
+		case 4:
+			m_renderOption = Wallpaper::TiledScaled;
+			break;
+		case 0:
+		default:
+			m_renderOption = Wallpaper::Centered;
+			break;
+	}
 
-void Wallpaper::setAspectRatio( void )
-{
-	if ( DebugEnabled ) qDebug() << "SET ASPECT RATIO";
-
-	m_aspectRatio.setX( m_configWidget.aspectW->text().toInt() );
-	m_aspectRatio.setY( m_configWidget.aspectH->text().toInt() );
 	settingsModified();
 }
 
@@ -197,22 +199,40 @@ void Wallpaper::render (void)
 
 	// This code was intended to be in settingsModified(), but boundingRect() wasn't returning the
 	// expected values.  If you figure out how to fix this, put this code back into settingsModified().
-	if ( m_renderOptions.testFlag( Wallpaper::Stretch ) )
+	if ( m_renderOption.testFlag( Wallpaper::TiledScaled ) )
 	{
-		if ( m_renderOptions.testFlag( Wallpaper::Tile ) )
+		// Scale so that the number of tiles fit into the screen space
+		QSize scaledTiling = boundingRect().size().toSize();
+		scaledTiling.rwidth() /= m_tiling.x();
+		scaledTiling.rheight() /= m_tiling.y();
+		m_movie.setScaledSize( scaledTiling );
+		m_displayedLabel.resize( scaledTiling );
+	}
+	else if ( m_renderOption.testFlag( Wallpaper::Scaled ) )
+	{
+		// Scale to size of the screen
+		m_movie.setScaledSize( boundingRect().size().toSize() );
+		m_displayedLabel.resize( boundingRect().size().toSize() );
+	}
+	else if ( m_renderOption.testFlag( Wallpaper::ScaledPreserveAspect ) )
+	{
+		// Scale to size of the screen, preserving the aspect ratio of the original image
+		QSize renderSize = boundingRect().size().toSize();
+		QSize imageSize = m_movie.frameRect().size();
+		QSize aspectScale;
+
+		if ( imageSize.width() > imageSize.height() )
 		{
-			// Scale so that the number of tiles fit into the screen space
-			QSize scaledTiling = boundingRect().size().toSize();
-			scaledTiling.rwidth() /= m_tiling.x();
-			scaledTiling.rheight() /= m_tiling.y();
-			m_movie.setScaledSize( scaledTiling );
-			m_displayedLabel.resize( scaledTiling );
+			aspectScale = QSize( renderSize.width(), imageSize.height() * renderSize.width() / imageSize.width() );
 		} else {
-			// Scale to size of the screen
-			m_movie.setScaledSize( boundingRect().size().toSize() );
-			m_displayedLabel.resize( boundingRect().size().toSize() );
+			aspectScale = QSize( imageSize.width() * renderSize.height() / imageSize.height(), renderSize.height() );
 		}
-	} else {
+
+		m_movie.setScaledSize( aspectScale );
+		m_displayedLabel.resize( aspectScale );
+	}
+	else
+	{
 		// Reset to original size
 		m_movie.setScaledSize( QSize( -1, -1 ) );
 		m_displayedLabel.resize( m_movie.frameRect().size() );
@@ -221,7 +241,7 @@ void Wallpaper::render (void)
 	QPainter painter;
 	painter.begin (&m_buffer);
 
-	if ( m_renderOptions.testFlag( Wallpaper::Tile ) )
+	if ( ( m_renderOption.testFlag( Wallpaper::Tiled ) ) || ( m_renderOption.testFlag( Wallpaper::TiledScaled ) ) )
 	{
 		for ( int x = 0; x < m_tiling.x(); x++ ) {
 			for ( int y = 0; y < m_tiling.y(); y++ ) {

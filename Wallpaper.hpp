@@ -25,10 +25,11 @@ class Wallpaper : public Plasma::Wallpaper
 		virtual QWidget* createConfigurationInterface (QWidget* parent);
 
 		enum RenderOption {
-			Default = 0x0,
-			Stretch = 0x1,
-			Aspect = 0x2,
-			Tile = 0x4
+			Centered = 0x0,
+			Scaled = 0x1,
+			ScaledPreserveAspect = 0x2,
+			Tiled = 0x4,
+			TiledScaled = 0x8
 		};
 		Q_DECLARE_FLAGS( RenderOptions, RenderOption );
 
@@ -41,8 +42,7 @@ class Wallpaper : public Plasma::Wallpaper
 	protected slots:
 		void settingsModified();
 		void selectFile();
-		void setRenderOptions();
-		void setAspectRatio();
+		void setRenderOption();
 		void setTiling();
 		void frameChanged();
 		void movieFinished();
@@ -51,8 +51,7 @@ class Wallpaper : public Plasma::Wallpaper
 		Ui::Config m_configWidget;
 
 		QString m_filePath;
-		RenderOptions m_renderOptions;
-		QPoint m_aspectRatio;
+		RenderOptions m_renderOption;
 		QPoint m_tiling;
 
 		QMovie m_movie;

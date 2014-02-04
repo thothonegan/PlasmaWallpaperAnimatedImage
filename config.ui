@@ -35,24 +35,32 @@
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_5">
      <item>
-      <widget class="QCheckBox" name="renderOptionStretch">
-       <property name="text">
-        <string>Stretch</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="renderOptionAspect">
-       <property name="text">
-        <string>Aspect</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="renderOptionTile">
-       <property name="text">
-        <string>Tile</string>
-       </property>
+      <widget class="QComboBox" name="renderOption">
+       <item>
+        <property name="text">
+         <string>Centered</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Scaled</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Scaled (Preserve Aspect Ratio)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Tiled</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Scale-Tiled</string>
+        </property>
+       </item>
       </widget>
      </item>
     </layout>
@@ -61,13 +69,6 @@
     <layout class="QHBoxLayout" name="horizontalLayout_6">
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <widget class="QLabel" name="label_4">
-         <property name="text">
-          <string>Aspect Ratio</string>
-         </property>
-        </widget>
-       </item>
        <item>
         <widget class="QLabel" name="label">
          <property name="enabled">
@@ -85,20 +86,6 @@
        <property name="leftMargin">
         <number>10</number>
        </property>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_7">
-         <item>
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>W</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="aspectW"/>
-         </item>
-        </layout>
-       </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
@@ -120,20 +107,6 @@
        <property name="leftMargin">
         <number>10</number>
        </property>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <item>
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>H</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="aspectH"/>
-         </item>
-        </layout>
-       </item>
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_10">
          <item>

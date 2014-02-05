@@ -15,7 +15,6 @@ Wallpaper::Wallpaper (QObject* parent, const QVariantList& args)
 {
 	m_movie.setCacheMode (QMovie::CacheAll);
 	m_displayedLabel.setMovie (&m_movie);
-	alignDisplayedLabel();
 
 	connect (&m_movie, SIGNAL(frameChanged(int)), this, SLOT(frameChanged()));
 }
@@ -81,16 +80,6 @@ void Wallpaper::init (const KConfigGroup& config)
 	emit update(boundingRect());
 }
 
-void Wallpaper::alignDisplayedLabel (void)
-{
-	if ( ( m_renderOption.testFlag( Wallpaper::Tiled ) ) || ( m_renderOption.testFlag( Wallpaper::TiledScaled ) ) )
-	{
-		m_displayedLabel.setAlignment( Qt::AlignLeft | Qt::AlignTop );
-	} else {
-		m_displayedLabel.setAlignment( Qt::AlignHCenter | Qt::AlignVCenter );
-	}
-}
-
 void Wallpaper::settingsModified (void)
 {
 	if ( DebugEnabled )
@@ -99,8 +88,6 @@ void Wallpaper::settingsModified (void)
 		qDebug() << "Current File Path : " << m_filePath;
 	}
 	m_configWidget.m_filePath->setText (m_filePath);
-
-	alignDisplayedLabel();
 
 	m_movie.stop();
 	m_movie.setFileName (m_filePath);
@@ -237,7 +224,14 @@ void Wallpaper::render (void)
 				m_displayedLabel.render( &painter, offset );
 			}
 		}
-	} else {
+	}
+	else if ( m_renderOption.testFlag( Wallpaper::Centered ) )
+	{
+		QPoint offset = QPoint( renderSize.width() / 2 - imageSize.width() / 2, renderSize.height() / 2 - imageSize.height() / 2 );
+		m_displayedLabel.render( &painter, offset );
+	}
+	else
+	{
 		m_displayedLabel.render (&painter);
 	}
 }

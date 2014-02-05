@@ -60,7 +60,6 @@ class Wallpaper : public Plasma::Wallpaper
 		QPixmap m_buffer;
 
 		void render (void);
-		void alignDisplayedLabel (void);
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS( Wallpaper::RenderOptions );

@@ -30,7 +30,7 @@ class Wallpaper : public Plasma::Wallpaper
 			Scaled = 0x2,
 			ScaledPreserveAspect = 0x4,
 			Tiled = 0x8,
-			TiledScaled = 0x16
+			TiledScaled = 0x10
 		};
 		Q_DECLARE_FLAGS( RenderOptions, RenderOption );
 
@@ -46,7 +46,6 @@ class Wallpaper : public Plasma::Wallpaper
 		void setRenderOption();
 		void setTiling();
 		void frameChanged();
-		void movieFinished();
 
 	private:
 		Ui::Config m_configWidget;

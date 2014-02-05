@@ -17,7 +17,6 @@ Wallpaper::Wallpaper (QObject* parent, const QVariantList& args)
 	m_displayedLabel.setMovie (&m_movie);
 	alignDisplayedLabel();
 
-	connect (&m_movie, SIGNAL(finished()), this, SLOT(movieFinished()));
 	connect (&m_movie, SIGNAL(frameChanged(int)), this, SLOT(frameChanged()));
 }
 
@@ -48,8 +47,8 @@ QWidget* Wallpaper::createConfigurationInterface (QWidget* parent)
 	m_configWidget.m_filePath->setText (m_filePath);
 	connect (m_configWidget.m_selectFileButton, SIGNAL(clicked()), this, SLOT(selectFile()));
 
-	int index = (int)m_renderOption;
-	if ( index > 2 ) index = log( index ) / log(2);
+	int index = (int)m_renderOption - 1;
+	if ( index > 2 ) index = log( m_renderOption ) / log(2);
 	m_configWidget.renderOption->setCurrentIndex( index );
 	connect( m_configWidget.renderOption, SIGNAL( currentIndexChanged(int) ), this, SLOT( setRenderOption() ) );
 
@@ -66,7 +65,6 @@ QWidget* Wallpaper::createConfigurationInterface (QWidget* parent)
 void Wallpaper::init (const KConfigGroup& config)
 {
 	m_filePath = config.readEntry ("filePath", QString());
-
 	m_renderOption = (Wallpaper::RenderOptions)config.readEntry( "renderOption", 0 );
 	m_tiling = config.readEntry( "tiling", QPoint() );
 
@@ -80,7 +78,6 @@ void Wallpaper::init (const KConfigGroup& config)
 	m_movie.setFileName(m_filePath);
 	m_movie.start();
 
-	render();
 	emit update(boundingRect());
 }
 
@@ -110,8 +107,6 @@ void Wallpaper::settingsModified (void)
 	m_movie.start();
 
 	emit settingsChanged(true);
-
-	render();
 	emit update(boundingRect());
 }
 
@@ -185,12 +180,6 @@ void Wallpaper::frameChanged (void)
 	// repaint
 	render();
 	emit update(boundingRect());
-}
-
-void Wallpaper::movieFinished (void)
-{
-	if ( DebugEnabled ) qDebug() << "*** movie finished";
-	// m_movie.start(); // repeat
 }
 
 void Wallpaper::render (void)

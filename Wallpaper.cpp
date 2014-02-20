@@ -224,6 +224,8 @@ void Wallpaper::render (void)
 	QPainter painter;
 	painter.begin (&m_buffer);
 
+	painter.fillRect (0, 0, renderSize.width(), renderSize.height(), QColor(0, 0, 0));
+
 	if ((m_renderOption == Wallpaper::Tiled) || (m_renderOption == Wallpaper::TiledScaled))
 	{
 		for (int x = 0; x < m_tiling.x(); x++) {

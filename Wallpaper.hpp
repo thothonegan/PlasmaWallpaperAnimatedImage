@@ -5,12 +5,9 @@
 
 #include <QLabel>
 #include <QMovie>
-#include <QFlags>
 #include <QString>
 
 #include "ui_config.h"
-
-const bool DebugEnabled = false;
 
 class Wallpaper : public Plasma::Wallpaper
 {
@@ -23,16 +20,6 @@ class Wallpaper : public Plasma::Wallpaper
 		void paint (QPainter* painter, const QRectF& exposedRect);
 
 		virtual QWidget* createConfigurationInterface (QWidget* parent);
-
-		enum RenderOption {
-			None = 0x0,
-			Centered = 0x1,
-			Scaled = 0x2,
-			ScaledPreserveAspect = 0x4,
-			Tiled = 0x8,
-			TiledScaled = 0x10
-		};
-		Q_DECLARE_FLAGS( RenderOptions, RenderOption );
 
 	Q_SIGNALS:
 		void settingsChanged (bool modified);
@@ -48,6 +35,15 @@ class Wallpaper : public Plasma::Wallpaper
 		void frameChanged();
 
 	private:
+		enum RenderOptions {
+			None = 0x0,
+			Centered = 0x1,
+			Scaled = 0x2,
+			ScaledPreserveAspect = 0x4,
+			Tiled = 0x8,
+			TiledScaled = 0x10
+		};
+
 		Ui::Config m_configWidget;
 
 		QString m_filePath;
@@ -61,8 +57,6 @@ class Wallpaper : public Plasma::Wallpaper
 
 		void render (void);
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS( Wallpaper::RenderOptions );
 
 K_EXPORT_PLASMA_WALLPAPER (animatedimage, Wallpaper);
 

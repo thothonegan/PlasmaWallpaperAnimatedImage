@@ -5,6 +5,7 @@
 
 #include <QLabel>
 #include <QMovie>
+#include <QString>
 
 #include "ui_config.h"
 
@@ -29,13 +30,25 @@ class Wallpaper : public Plasma::Wallpaper
 	protected slots:
 		void settingsModified();
 		void selectFile();
+		void setRenderOption();
+		void setTiling();
 		void frameChanged();
-		void movieFinished();
 
 	private:
+		enum RenderOptions {
+			None = 0x0,
+			Centered = 0x1,
+			Scaled = 0x2,
+			ScaledPreserveAspect = 0x4,
+			Tiled = 0x8,
+			TiledScaled = 0x10
+		};
+
 		Ui::Config m_configWidget;
 
 		QString m_filePath;
+		RenderOptions m_renderOption;
+		QPoint m_tiling;
 
 		QMovie m_movie;
 		QLabel m_displayedLabel;
